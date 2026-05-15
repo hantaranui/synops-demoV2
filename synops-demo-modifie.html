@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SynOps — Démonstrateur</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@400;600;700;800;900&display=swap');
+:root{
+  --bg:#03060d;--bg2:rgba(10,18,32,0.88);--bg3:rgba(15,26,46,0.9);
+  --cyan:#00d4ff;--green:#39e07a;--purple:#b06dff;--orange:#ff8c00;
+  --amber:#ffb347;--red:#ff4d4d;--text:#edf2fa;--muted:#7a8fa6;
+  --border:rgba(255,255,255,0.08);
+  --mono:'Share Tech Mono',monospace;--font:'Exo 2',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;font-family:var(--font);color:var(--text);background:var(--bg)}
+
+/* BG */
+#bg-layer{position:fixed;inset:0;z-index:0;background:url('https://raw.githubusercontent.com/hantaranui/images-hackaton/main/ImageFond.png') center/cover no-repeat;filter:brightness(0.22) saturate(0.8)}
+#grid-layer{position:fixed;inset:0;z-index:1;background-image:linear-gradient(rgba(0,212,255,0.03)1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.03)1px,transparent 1px);background-size:55px 55px;pointer-events:none}
+#scan-line{position:fixed;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);z-index:2;animation:scan 4s linear infinite;opacity:0.4}
+@keyframes scan{0%{top:0}100%{top:100vh}}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;padding:0 2.5vw;display:flex;align-items:center;justify-content:space-between;background:rgba(3,6,13,0.92);border-bottom:1px solid rgba(0,212,255,0.15);backdrop-filter:blur(16px)}
+.nav-logo img{height:34px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(0,212,255,0.4))}
+.nav-dots{display:flex;gap:8px;align-items:center}
+.dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.1);border:1px solid var(--muted);cursor:pointer;transition:all .3s}
+.dot.a{background:var(--cyan);border-color:var(--cyan);box-shadow:0 0 10px var(--cyan)}
+.dot.d{background:rgba(0,212,255,0.3);border-color:rgba(0,212,255,0.5)}
+.nav-right{font-family:var(--mono);font-size:11px;color:var(--muted);text-align:right;line-height:1.6}
+
+/* FOOTER */
+footer{position:fixed;bottom:0;left:0;right:0;z-index:200;height:52px;padding:0 2.5vw;display:flex;align-items:center;justify-content:space-between;background:rgba(3,6,13,0.92);border-top:1px solid rgba(0,212,255,0.15);backdrop-filter:blur(16px)}
+.foot-label{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.foot-btns{display:flex;gap:10px}
+.btn{padding:9px 24px;border-radius:3px;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;border:none;letter-spacing:.5px}
+.btn-g{background:transparent;border:1px solid rgba(255,255,255,0.12);color:var(--muted)}
+.btn-g:hover{border-color:rgba(255,255,255,0.3);color:var(--text)}
+.btn-p{background:var(--cyan);color:#03060d}
+.btn-p:hover{background:#33ddff;transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,212,255,0.4)}
+
+/* SCREENS */
+.screen{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;padding:56px 0 52px;opacity:0;pointer-events:none;transition:opacity .5s ease}
+.screen.active{opacity:1;pointer-events:all}
+.screen-body{flex:1;display:flex;flex-direction:column;padding:2vh 3vw;overflow:hidden}
+
+/* SHARED */
+.kicker{font-family:var(--mono);font-size:clamp(9px,1.1vw,13px);color:var(--cyan);letter-spacing:3px;text-transform:uppercase;margin-bottom:8px}
+.main-title{font-size:clamp(20px,3vw,38px);font-weight:900;line-height:1.15;margin-bottom:6px}
+.main-title em{font-style:normal;color:var(--cyan)}
+.sub-title{font-size:clamp(12px,1.4vw,16px);color:var(--muted);margin-bottom:16px;line-height:1.5}
+.footer-bar{margin-top:auto;padding:12px 18px;background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.15);border-radius:6px;font-size:clamp(11px,1.2vw,14px);color:var(--cyan);text-align:center;font-weight:600}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:16px;backdrop-filter:blur(8px)}
+.tag{font-family:var(--mono);font-size:clamp(8px,0.9vw,11px);padding:3px 9px;border-radius:2px;letter-spacing:1px}
+
+/* ===== PAGE 1 ===== */
+#s1{overflow:hidden}
+#s1::before{content:'';position:absolute;inset:0;z-index:0;background:linear-gradient(90deg,rgba(3,6,13,0.78),rgba(3,6,13,0.36) 44%,rgba(3,6,13,0.72)),url('https://github.com/hantaranui/images-hackaton/blob/main/Fond.png?raw=true') center/cover no-repeat;filter:brightness(0.72) saturate(1.1)}
+#s1::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(circle at 50% 48%,rgba(255,140,0,0.18),transparent 24%),linear-gradient(90deg,transparent 0 48%,rgba(255,140,0,0.22) 49%,transparent 50% 100%);opacity:.75;animation:p1-warning-glow 2.4s ease-in-out infinite}
+#s1 .screen-body{justify-content:center;align-items:center;text-align:center;position:relative;z-index:2}
+.p1-top{margin-bottom:20px}
+.p1-kicker{font-family:var(--mono);font-size:clamp(11px,1.3vw,15px);color:var(--cyan);letter-spacing:4px;text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;justify-content:center;gap:12px}
+.p1-kicker::before,.p1-kicker::after{content:'';flex:1;max-width:120px;height:1px;background:linear-gradient(90deg,transparent,var(--cyan))}
+.p1-kicker::after{background:linear-gradient(90deg,var(--cyan),transparent)}
+.p1-title{font-size:clamp(28px,5vw,64px);font-weight:900;line-height:1.05;margin-bottom:16px}
+.p1-title em{font-style:normal;color:var(--cyan)}
+.p1-desc{font-size:clamp(14px,1.6vw,20px);color:var(--muted);max-width:680px;line-height:1.7;margin:0 auto 28px}
+.p1-desc strong{color:var(--text)}
+.p1-badge{display:inline-flex;align-items:center;gap:10px;padding:10px 22px;border:1px solid rgba(0,212,255,0.3);background:rgba(0,212,255,0.06);border-radius:4px;font-family:var(--mono);font-size:clamp(10px,1.1vw,13px);color:var(--cyan);letter-spacing:1px}
+.p1-badge::before{content:'⬡';font-size:14px}
+.p1-stats{display:flex;justify-content:center;gap:40px;margin-top:32px}
+.p1-stat{text-align:center}
+.p1-stat-num{font-family:var(--mono);font-size:clamp(22px,3vw,40px);font-weight:700;color:var(--cyan);display:block}
+.p1-stat-lbl{font-size:clamp(10px,1vw,12px);color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.p1-pulse{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;margin-right:8px;animation:pulse 1.5s ease-in-out infinite}
+.p1-warning{position:absolute;inset:8vh 7vw;z-index:1;pointer-events:none;border:1px solid rgba(255,140,0,0.18);opacity:.86;animation:p1-warning-frame 1.8s steps(2,end) infinite}
+.p1-warning::before,.p1-warning::after{content:'';position:absolute;inset:22%;border:2px solid rgba(255,140,0,0.5);border-radius:50%;box-shadow:0 0 22px rgba(255,140,0,0.28);animation:p1-warning-ring 2.2s ease-out infinite}
+.p1-warning::after{animation-delay:.7s;inset:30%;opacity:.72}
+.p1-warning-corner{position:absolute;width:76px;height:76px;border-color:rgba(255,140,0,0.68);filter:drop-shadow(0 0 10px rgba(255,140,0,0.4))}
+.p1-warning-corner.tl{top:0;left:0;border-top:3px solid;border-left:3px solid}
+.p1-warning-corner.tr{top:0;right:0;border-top:3px solid;border-right:3px solid}
+.p1-warning-corner.bl{bottom:0;left:0;border-bottom:3px solid;border-left:3px solid}
+.p1-warning-corner.br{bottom:0;right:0;border-bottom:3px solid;border-right:3px solid}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
+@keyframes p1-warning-glow{0%,100%{opacity:.42}50%{opacity:.9}}
+@keyframes p1-warning-frame{0%,100%{border-color:rgba(255,140,0,0.14)}50%{border-color:rgba(255,140,0,0.44)}}
+@keyframes p1-warning-ring{0%{transform:scale(.55);opacity:.85}80%,100%{transform:scale(1.45);opacity:0}}
+
+/* ===== PAGE 2 ===== */
+#s2 .screen-body{position:relative}
+.p2-grid{flex:1;display:grid;grid-template-columns:1fr 2fr 1fr;grid-template-rows:1fr 1fr;gap:12px;min-height:0}
+.p2-map{grid-column:2;grid-row:1/3;border-radius:10px;overflow:hidden;position:relative;border:1px solid rgba(0,212,255,0.2)}
+.p2-map img{width:100%;height:100%;object-fit:cover;filter:brightness(0.7) saturate(0.9)}
+.p2-map-overlay{position:absolute;inset:0;background:radial-gradient(circle at center,transparent 30%,rgba(3,6,13,0.5)90%)}
+.p2-map-label{display:none}
+.p2-map-ping{position:absolute;bottom:50%;left:50%;transform:translate(-50%,50%);width:60px;height:60px;border-radius:50%;border:2px solid var(--orange);animation:ping 2s ease-out infinite;opacity:0}
+@keyframes ping{0%{transform:translate(-50%,50%) scale(0);opacity:0.8}100%{transform:translate(-50%,50%) scale(3);opacity:0}}
+.msg-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden;backdrop-filter:blur(8px);opacity:0;transform:scale(0.95);transition:opacity .5s ease,transform .28s ease,border-color .28s ease,box-shadow .28s ease,filter .28s ease;display:flex;flex-direction:column;position:relative;cursor:default}
+.msg-card.show{opacity:1;transform:scale(1)}
+.p2-grid:hover .msg-card.show:not(:hover){opacity:.48;filter:saturate(.72) brightness(.82)}
+.msg-card.show:hover{opacity:1;transform:scale(1.025) translateY(-4px);z-index:5}
+.msg-card.show:hover::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(120deg,transparent 0 32%,rgba(255,255,255,0.08) 45%,transparent 58%);animation:card-sweep 1.2s ease-out}
+.msg-card.show:hover .msg-card-raw{background:rgba(0,0,0,0.44)}
+.msg-card.show.cy:hover{border-color:rgba(0,212,255,.75);box-shadow:0 0 28px rgba(0,212,255,.24)}
+.msg-card.show.gr:hover{border-color:rgba(57,224,122,.75);box-shadow:0 0 28px rgba(57,224,122,.22)}
+.msg-card.show.pu:hover{border-color:rgba(176,109,255,.75);box-shadow:0 0 28px rgba(176,109,255,.22)}
+.msg-card.show.or:hover{border-color:rgba(255,140,0,.75);box-shadow:0 0 28px rgba(255,140,0,.24)}
+@keyframes card-sweep{0%{transform:translateX(-100%);opacity:0}25%{opacity:1}100%{transform:translateX(100%);opacity:0}}
+.msg-card-header{padding:13px 16px 11px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.msg-card-icon{width:32px;height:32px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.msg-card-name{font-size:clamp(14px,1.35vw,18px);font-weight:800}
+.msg-card-time{font-family:var(--mono);font-size:clamp(10px,0.9vw,12px);color:var(--muted);margin-left:auto}
+.msg-card-raw{font-family:var(--mono);font-size:clamp(11px,1.05vw,14px);padding:16px 18px;background:rgba(0,0,0,0.3);line-height:1.75;flex:1}
+.msg-card-problem{padding:11px 16px;font-size:clamp(11px,1.05vw,14px);color:var(--muted);display:flex;gap:7px;align-items:flex-start;border-top:1px solid var(--border);line-height:1.35}
+.msg-card-problem::before{content:'⚠';color:#ff9800;flex-shrink:0}
+.cy{border-top:2px solid var(--cyan)}.cy .msg-card-icon{background:rgba(0,212,255,.12);color:var(--cyan)}.cy .msg-card-name{color:var(--cyan)}
+.gr{border-top:2px solid var(--green)}.gr .msg-card-icon{background:rgba(57,224,122,.12);color:var(--green)}.gr .msg-card-name{color:var(--green)}
+.pu{border-top:2px solid var(--purple)}.pu .msg-card-icon{background:rgba(176,109,255,.12);color:var(--purple)}.pu .msg-card-name{color:var(--purple)}
+.or{border-top:2px solid var(--orange)}.or .msg-card-icon{background:rgba(255,140,0,.12);color:var(--orange)}.or .msg-card-name{color:var(--orange)}
+
+/* ===== PAGE 3 ===== */
+.p3-grid{flex:0 0 auto;display:grid;grid-template-columns:minmax(0,1.05fr) 190px minmax(0,1.05fr);gap:18px;min-height:0;align-items:stretch;margin:auto 0}
+.p3-col{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:22px;backdrop-filter:blur(8px);align-self:stretch}
+.p3-col-title{font-family:var(--mono);font-size:clamp(10px,1vw,14px);color:var(--red);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px}
+.p3-col-title.muted{color:var(--muted)}
+.p3-item{display:flex;align-items:flex-start;gap:12px;padding:13px 14px;margin-bottom:10px;border-radius:5px;background:rgba(0,0,0,0.22)}
+.p3-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.p3-item-text{font-family:var(--mono);font-size:clamp(12px,1.25vw,16px);line-height:1.45}
+.p3-item-text span{font-size:clamp(10px,1vw,13px)!important}
+.p3-center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;align-self:center}
+.p3-bridge{width:100%;padding:20px 12px;border:2px solid rgba(0,212,255,0.5);border-radius:8px;text-align:center;background:rgba(0,212,255,0.06);box-shadow:0 0 20px rgba(0,212,255,0.15)}
+.p3-bridge-title{font-size:clamp(14px,1.8vw,20px);font-weight:900;color:var(--cyan);margin-bottom:8px;letter-spacing:2px}
+.p3-bridge-sub{font-size:clamp(10px,1.1vw,13px);color:var(--cyan);opacity:0.8}
+.p3-arrow{font-size:20px;color:rgba(0,212,255,0.5)}
+.p3-need{display:flex;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:1px solid var(--border);font-size:clamp(13px,1.3vw,17px);color:var(--muted);line-height:1.45}
+.p3-need:last-child{border:none}
+.p3-need-n{font-family:var(--mono);font-size:clamp(10px,1vw,13px);color:var(--cyan);flex-shrink:0}
+
+/* ===== PAGE 4 ===== */
+.p4-pipeline{display:flex;gap:1px;margin-bottom:10px;background:var(--border);border-radius:5px;overflow:hidden}
+.p4-ps{flex:1;padding:9px 8px;text-align:center;background:rgba(10,18,32,0.9)}
+.p4-ps.llm{background:rgba(255,179,71,0.08);border-top:2px solid var(--amber)}
+.p4-ps-n{font-family:var(--mono);font-size:clamp(7px,0.7vw,9px);color:var(--muted);margin-bottom:2px}
+.p4-ps-name{font-size:clamp(9px,1vw,12px);font-weight:700}
+.p4-ps.llm .p4-ps-name{color:var(--amber)}
+.p4-llm-note{font-family:var(--mono);font-size:clamp(8px,0.85vw,10px);color:var(--amber);text-align:center;margin-bottom:10px;padding:5px 12px;background:rgba(255,179,71,0.06);border-radius:3px;border:1px solid rgba(255,179,71,0.15)}
+.p4-layout{flex:1;display:grid;grid-template-columns:minmax(260px,1fr) minmax(0,2fr);gap:14px;min-height:0;align-items:stretch}
+.p4-msglist{display:grid;grid-template-rows:repeat(4,1fr);gap:10px;min-height:360px}
+.p4-msgbtn{padding:17px 18px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;cursor:pointer;transition:all .2s;text-align:left;backdrop-filter:blur(8px)}
+.p4-msgbtn:hover{border-color:rgba(255,255,255,0.2)}
+.p4-msgbtn-name{font-size:clamp(14px,1.35vw,18px);font-weight:800;margin-bottom:8px}
+.p4-msgbtn-key{font-family:var(--mono);font-size:clamp(10px,1vw,13px);color:var(--muted);line-height:1.35}
+.p4-msgbtn.cy.active{border-color:var(--cyan);background:rgba(0,212,255,0.07)}
+.p4-msgbtn.gr.active{border-color:var(--green);background:rgba(57,224,122,0.07)}
+.p4-msgbtn.pu.active{border-color:var(--purple);background:rgba(176,109,255,0.07)}
+.p4-msgbtn.or.active{border-color:var(--orange);background:rgba(255,140,0,0.07)}
+.p4-analysis{background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;backdrop-filter:blur(8px);min-height:360px}
+.p4-ana-head{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.p4-ana-title{font-size:clamp(12px,1.3vw,16px);font-weight:700}
+.p4-ana-passe{font-family:var(--mono);font-size:clamp(8px,0.85vw,10px);padding:3px 10px;background:rgba(255,179,71,0.12);color:var(--amber);border-radius:2px;letter-spacing:1px}
+.p4-ana-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--border);flex:1}
+.p4-ana-col{background:var(--bg2);padding:14px 16px}
+.p4-col-lbl{font-family:var(--mono);font-size:clamp(7px,0.8vw,9px);color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
+.p4-mapping{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.p4-term{font-family:var(--mono);font-size:clamp(9px,1vw,12px);background:rgba(0,0,0,0.4);padding:4px 8px;border-radius:3px}
+.p4-arr{font-size:14px;color:var(--cyan)}
+.p4-llmbox{background:rgba(255,179,71,0.05);border:1px solid rgba(255,179,71,0.15);border-radius:5px;padding:12px;font-size:clamp(10px,1.1vw,13px);font-style:italic;color:#c0cad8;line-height:1.7;position:relative}
+.p4-llmbox::before{content:'⬡ Mistral AI';display:block;font-style:normal;font-family:var(--mono);font-size:clamp(7px,0.8vw,9px);color:var(--amber);margin-bottom:7px;letter-spacing:1px}
+.p4-score{font-family:var(--mono);font-size:clamp(26px,3.5vw,44px);font-weight:700;line-height:1}
+.p4-score-lbl{font-family:var(--mono);font-size:clamp(7px,0.8vw,9px);color:var(--muted);margin:4px 0 8px;letter-spacing:1px}
+.p4-sbar{height:4px;border-radius:2px;background:rgba(255,255,255,0.07);margin-bottom:12px}
+.p4-sfill{height:100%;border-radius:2px}
+.p4-pill{display:inline-flex;align-items:center;gap:5px;padding:5px 13px;border-radius:20px;font-size:clamp(9px,1vw,12px);font-weight:700;margin-bottom:8px}
+.pill-v{background:rgba(57,224,122,.12);color:var(--green);border:1px solid rgba(57,224,122,.25)}
+.pill-c{background:rgba(176,109,255,.12);color:var(--purple);border:1px solid rgba(176,109,255,.25)}
+.pill-a{background:rgba(255,140,0,.12);color:var(--orange);border:1px solid rgba(255,140,0,.25)}
+.pill-p{background:rgba(0,212,255,.12);color:var(--cyan);border:1px solid rgba(0,212,255,.25)}
+.p4-bidir{font-size:clamp(9px,1vw,11px);color:var(--muted);display:flex;align-items:flex-start;gap:4px;line-height:1.4}
+.p4-bidir::before{content:'↔';color:var(--cyan)}
+.p4-warn{font-size:clamp(9px,1vw,11px);color:#ff6b6b;padding:6px 9px;background:rgba(255,107,107,.07);border-left:2px solid #ff6b6b;line-height:1.4}
+.p4-alert-tag{font-family:var(--mono);font-size:clamp(9px,1vw,12px);padding:6px 10px;background:rgba(255,140,0,.1);border:1px solid rgba(255,140,0,.25);border-radius:3px;color:var(--orange);letter-spacing:1px;margin-bottom:8px}
+.p4-placeholder{display:flex;align-items:center;justify-content:center;min-height:360px;color:var(--muted);font-size:clamp(16px,1.6vw,24px);gap:8px;text-align:center;font-weight:800;line-height:1.3;padding:28px}
+
+/* ===== PAGE 5 ===== */
+.p5-layout{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:14px;min-height:0;align-items:start}
+.p5-left{display:flex;flex-direction:column;gap:10px}
+.p5-table-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden;backdrop-filter:blur(8px)}
+.p5-table-head{padding:13px 18px;border-bottom:1px solid var(--border);font-size:clamp(13px,1.25vw,17px);font-weight:800;color:var(--cyan);display:flex;align-items:center;gap:8px}
+.p5-table-head::before{content:'⬡';font-size:12px}
+table{width:100%;border-collapse:collapse}
+th{padding:10px 12px;font-family:var(--mono);font-size:clamp(9px,0.9vw,11px);color:var(--muted);letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--border);text-align:left;background:rgba(0,0,0,0.2)}
+td{padding:13px 12px;font-size:clamp(11px,1.05vw,14px);border-bottom:1px solid rgba(255,255,255,0.04)}
+tr:last-child td{border:none}
+.td-mono{font-family:var(--mono);font-size:clamp(10px,1vw,13px)}
+.td-score{font-family:var(--mono);font-weight:700;font-size:clamp(14px,1.35vw,18px)}
+.stat-pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:10px;font-size:clamp(10px,0.95vw,12px);font-weight:700}
+.stat-v{background:rgba(57,224,122,.12);color:var(--green)}
+.stat-p{background:rgba(255,140,0,.12);color:var(--orange)}
+.p5-guarantees{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.p5-g{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:17px 18px;backdrop-filter:blur(8px)}
+.p5-g-icon{font-size:22px;margin-bottom:8px}
+.p5-g-title{font-size:clamp(14px,1.35vw,18px);font-weight:800;margin-bottom:5px}
+.p5-g-text{font-size:clamp(11px,1.1vw,14px);color:var(--muted);line-height:1.4}
+.p5-right{display:flex;flex-direction:column;gap:10px}
+.p5-actions-box{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:16px;backdrop-filter:blur(8px)}
+.p5-actions-title{font-family:var(--mono);font-size:clamp(10px,0.95vw,12px);color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+.p5-action{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:opacity .2s,transform .2s}
+.p5-action:hover{opacity:.95;transform:translateX(3px)}
+.p5-action.active{transform:translateX(4px);background:rgba(0,212,255,0.04);margin:0 -8px;padding-left:8px;padding-right:8px;border-radius:6px}
+.p5-action:last-child{border:none}
+.p5-action-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.p5-action-text{}
+.p5-action-name{font-size:clamp(13px,1.2vw,16px);font-weight:800;margin-bottom:2px}
+.p5-action-desc{font-size:clamp(10px,1vw,13px);color:var(--muted)}
+.p5-human-note{font-size:clamp(11px,1.05vw,14px);color:var(--muted);padding:13px 14px;background:rgba(0,212,255,0.04);border:1px solid rgba(0,212,255,0.12);border-radius:5px;line-height:1.5;text-align:center}
+
+/* ===== PAGE 6 ===== */
+.p6-layout{flex:1;display:grid;grid-template-columns:230px minmax(0,1fr) 230px;gap:14px;min-height:0;align-items:start}
+.p6-sources{display:flex;flex-direction:column;gap:8px}
+.p6-src{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:14px 16px;backdrop-filter:blur(8px);position:relative;overflow:hidden}
+.p6-src::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent);transform:translateX(-120%);opacity:0}
+.p6-src:hover::after,.p6-src.active::after{animation:p6-source-sweep 1.1s ease-out}
+.p6-src-name{font-size:clamp(13px,1.25vw,17px);font-weight:800;margin-bottom:5px}
+.p6-src-term{font-family:var(--mono);font-size:clamp(10px,1vw,13px);color:var(--text)}
+.p6-synth{background:var(--bg2);border:1px solid rgba(57,224,122,0.2);border-radius:10px;overflow:hidden;backdrop-filter:blur(8px);display:flex;flex-direction:column;position:relative}
+.p6-synth::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,transparent,rgba(57,224,122,0.08),transparent);transform:translateY(-100%);opacity:0}
+#s6.active .p6-synth::after{animation:p6-scan 3s ease-out .4s}
+.p6-synth-head{padding:15px 20px;border-bottom:1px solid rgba(255,255,255,0.06);background:rgba(57,224,122,0.05)}
+.p6-synth-title{font-size:clamp(17px,1.65vw,23px);font-weight:800;color:var(--green);margin-bottom:3px}
+.p6-synth-meta{font-family:var(--mono);font-size:clamp(10px,0.95vw,12px);color:var(--muted)}
+.p6-synth-body{padding:16px 20px;display:flex;flex-direction:column;gap:12px}
+.p6-item{display:flex;align-items:flex-start;gap:14px;padding:14px 16px;background:rgba(0,0,0,0.2);border-radius:6px;border-left:4px solid;opacity:1;transform:translateY(0);position:relative;overflow:hidden}
+.p6-src,.p6-item{transition:transform .2s,border-color .2s,background .2s,box-shadow .2s,opacity .2s,filter .2s}
+.p6-src{cursor:pointer}
+.p6-src.active,.p6-src.hovering,.p6-item.active,.p6-item.hovering{transform:translateY(-2px);background:rgba(0,212,255,0.06);box-shadow:0 0 18px rgba(0,212,255,0.12)}
+.p6-layout.is-linked .p6-src:not(.active):not(.hovering),.p6-layout.is-linked .p6-item:not(.active):not(.hovering){opacity:.55;filter:saturate(.75)}
+#s6.active .p6-item{animation:p6-item-in .62s ease-out both}
+#s6.active .p6-item:nth-child(1){animation-delay:.12s}
+#s6.active .p6-item:nth-child(2){animation-delay:.32s}
+#s6.active .p6-item:nth-child(3){animation-delay:.52s}
+#s6.active .p6-item:nth-child(4){animation-delay:.72s}
+.p6-item[data-key="contradiction"]{animation:p6-contradiction-pulse 2.2s ease-in-out infinite}
+#s6.active .p6-item[data-key="contradiction"]{animation:p6-item-in .62s ease-out .72s both,p6-contradiction-pulse 2.2s ease-in-out 1.35s infinite}
+.p6-item[data-key="contradiction"] .p6-item-icon{animation:p6-warning-icon 1.5s ease-in-out infinite}
+.p6-item-icon{font-size:21px;flex-shrink:0}
+.p6-item-term{font-family:var(--mono);font-size:clamp(13px,1.25vw,16px);font-weight:700;margin-bottom:4px}
+.p6-item-detail{font-size:clamp(11px,1.1vw,14px);color:var(--muted);line-height:1.4}
+.p6-item-stat{font-size:clamp(10px,1vw,13px);font-weight:700;margin-top:5px}
+.p6-synth-foot{padding:12px 20px;border-top:1px solid var(--border);font-family:var(--mono);font-size:clamp(9px,0.95vw,12px);color:var(--muted);display:flex;align-items:center;gap:6px}
+.p6-synth-foot::before{content:'↗';color:var(--green)}
+.p6-gains{display:flex;flex-direction:column;gap:8px}
+.p6-gain{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:14px 16px;backdrop-filter:blur(8px)}
+.p6-gain-icon{font-size:18px;margin-bottom:5px}
+.p6-gain-title{font-size:clamp(13px,1.2vw,16px);font-weight:800;margin-bottom:3px}
+.p6-gain-text{font-size:clamp(10px,1vw,13px);color:var(--muted);line-height:1.35}
+@keyframes p6-item-in{0%{opacity:0;transform:translateY(14px);filter:blur(2px)}100%{opacity:1;transform:translateY(0);filter:blur(0)}}
+@keyframes p6-contradiction-pulse{0%,100%{box-shadow:0 0 0 rgba(255,140,0,0);background:rgba(0,0,0,0.2)}50%{box-shadow:0 0 24px rgba(255,140,0,0.22);background:rgba(255,140,0,0.07)}}
+@keyframes p6-warning-icon{0%,100%{transform:scale(1);filter:drop-shadow(0 0 0 rgba(255,140,0,0))}50%{transform:scale(1.16);filter:drop-shadow(0 0 8px rgba(255,140,0,.65))}}
+@keyframes p6-source-sweep{0%{transform:translateX(-120%);opacity:0}25%{opacity:1}100%{transform:translateX(120%);opacity:0}}
+@keyframes p6-scan{0%{transform:translateY(-100%);opacity:0}20%{opacity:1}100%{transform:translateY(100%);opacity:0}}
+
+/* ===== PAGE 7 ===== */
+.p7-layout{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,520px);gap:18px;min-height:0;align-items:center;position:relative}
+.p7-left{display:flex;flex-direction:column;gap:16px;position:relative;z-index:1;align-self:center}
+.p7-headline{font-size:clamp(31px,4.15vw,60px);font-weight:900;line-height:1.03;max-width:none;text-shadow:0 0 28px rgba(0,212,255,.12)}
+.p7-headline em{font-style:normal;color:var(--cyan);text-shadow:0 0 26px rgba(0,212,255,.42);animation:p7-word-pulse 2.2s ease-in-out infinite}
+.p7-headline em:nth-of-type(2){animation-delay:.45s}
+.p7-quote{font-size:clamp(14px,1.25vw,18px);color:#a7b8c9;line-height:1.55;max-width:none;padding-left:18px;border-left:3px solid var(--cyan)}
+.p7-timeline{display:flex;gap:1px;background:var(--border);border-radius:6px;overflow:hidden;max-width:none}
+.p7-tl-step{flex:1;padding:14px 14px;background:rgba(10,18,32,.86);text-align:center}
+.p7-tl-year{font-family:var(--mono);font-size:clamp(10px,1vw,13px);font-weight:700;margin-bottom:4px}
+.p7-tl-year.y13{color:var(--red)}.p7-tl-year.y26{color:var(--cyan)}.p7-tl-year.y27{color:var(--green)}
+.p7-tl-text{font-size:clamp(10px,.95vw,13px);color:var(--muted);line-height:1.4}
+.p7-pillars{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:none}
+.p7-pillar{background:rgba(10,18,32,.86);border:1px solid var(--border);border-radius:6px;padding:16px 16px;backdrop-filter:blur(8px)}
+.p7-pillar-icon{font-size:20px;margin-bottom:7px}
+.p7-pillar-title{font-size:clamp(13px,1.12vw,16px);font-weight:800;margin-bottom:4px}
+.p7-pillar-text{font-size:clamp(10px,.96vw,13px);color:var(--muted);line-height:1.4}
+.p7-right{display:flex;flex-direction:column;gap:12px;position:relative;z-index:1;align-self:center}
+.p7-team-box{background:rgba(10,18,32,.9);border:1px solid rgba(255,255,255,.1);border-radius:10px;overflow:hidden;backdrop-filter:blur(8px);box-shadow:0 0 28px rgba(0,0,0,.22)}
+.p7-team-img{width:100%;height:330px;object-fit:cover;filter:brightness(0.78) saturate(1.04)}
+.p7-team-body{padding:16px 18px 18px}
+.p7-team-lbl{font-family:var(--mono);font-size:clamp(7px,0.8vw,10px);color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px}
+.p7-team-name{font-size:clamp(18px,2.2vw,28px);font-weight:900;margin-bottom:6px}
+.p7-team-desc{font-size:clamp(10px,1.1vw,13px);color:var(--muted);line-height:1.6;margin-bottom:10px}
+.p7-tags{display:flex;flex-wrap:wrap;gap:5px}
+.p7-tag{font-family:var(--mono);font-size:clamp(7px,0.8vw,10px);padding:2px 9px;border:1px solid var(--border);border-radius:2px;color:var(--muted);letter-spacing:1px}
+.p7-final{max-width:none;padding:18px 18px;background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.18);border-radius:6px;font-size:clamp(12px,1.08vw,15px);text-align:left;color:var(--muted);line-height:1.5}
+.p7-final strong{color:var(--text)}
+@keyframes p7-word-pulse{0%,100%{color:var(--cyan);text-shadow:0 0 18px rgba(0,212,255,.32)}50%{color:#71e9ff;text-shadow:0 0 34px rgba(0,212,255,.78),0 0 10px rgba(255,255,255,.22)}}
+@media (max-width:900px){
+  html,body{overflow:auto}
+  .screen-body{overflow:auto}
+  .p3-grid,.p4-layout,.p5-layout,.p6-layout,.p7-layout{grid-template-columns:1fr}
+  .p4-analysis,.p4-placeholder{min-height:0}
+  .p7-team-img{height:220px}
+}
+@media (min-width:1500px){
+  .p7-team-img{height:300px}
+}
+</style>
+</head>
+<body>
+
+<div id="bg-layer"></div>
+<div id="grid-layer"></div>
+<div id="scan-line"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <img src="https://raw.githubusercontent.com/hantaranui/images-hackaton/main/Logo%20avec%20fond%20transparent.png" alt="SynOps">
+  </div>
+  <div class="nav-dots" id="nav-dots"></div>
+  <div class="nav-right">Démonstrateur narratif<br>Women in Gen AI 2026</div>
+</nav>
+
+<!-- ===== PAGE 1 ===== -->
+<div class="screen active" id="s1">
+  <div class="p1-warning" aria-hidden="true">
+    <span class="p1-warning-corner tl"></span>
+    <span class="p1-warning-corner tr"></span>
+    <span class="p1-warning-corner bl"></span>
+    <span class="p1-warning-corner br"></span>
+  </div>
+  <div class="screen-body" style="justify-content:center;align-items:center;text-align:center">
+    <div class="p1-kicker"><span>Mali · janvier 2013 · Opération Serval</span></div>
+    <div class="p1-title">Assistant génératif de<br><em>médiation sémantique</em></div>
+    <div class="p1-desc">Dans une opération, plusieurs sources décrivent le même secteur.<br><strong>SynOps</strong> relie leurs messages, explique leur sens et les soumet à la validation humaine.</div>
+    <div class="p1-badge">Démonstrateur conceptuel · Données fictives non sensibles</div>
+    <div class="p1-stats">
+      <div class="p1-stat"><span class="p1-stat-num">4</span><span class="p1-stat-lbl">Sources hétérogènes</span></div>
+      <div class="p1-stat"><span class="p1-stat-num">3</span><span class="p1-stat-lbl">Passes progressives</span></div>
+      <div class="p1-stat"><span class="p1-stat-num" style="color:var(--green)"><span class="p1-pulse"></span>Live</span><span class="p1-stat-lbl">Démonstrateur</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE 2 ===== -->
+<div class="screen" id="s2">
+  <div class="screen-body">
+    <div class="kicker">Secteur B · 14 janvier 2013 · 14h21Z</div>
+    <div class="main-title">Les quatre messages du Secteur B</div>
+    <div class="p2-grid">
+      <!-- Top left -->
+      <div class="msg-card cy" id="mc1">
+        <div class="msg-card-header"><div class="msg-card-icon">✈</div><div class="msg-card-name">Drone ISR</div><div class="msg-card-time">14h21:03Z</div></div>
+        <div class="msg-card-raw">SOURCE: DRONE_ISR_7 | ZONE: SECTEUR_B<br>CONTACT: HOSTILE_MOVEMENT<br>EFFECTIF: 3 VEH + 12 PAX<br>HEADING: NW | KPH: 35</div>
+        <div class="msg-card-problem">Format anglais. Vocabulaire aviation. Coordonnées WGS84.</div>
+      </div>
+      <!-- Map center -->
+      <div class="p2-map">
+        <img src="https://raw.githubusercontent.com/hantaranui/images-hackaton/main/carte.png" alt="Carte Secteur B">
+        <div class="p2-map-overlay"></div>
+        <div class="p2-map-ping"></div>
+        <div class="p2-map-label">SECTEUR B</div>
+      </div>
+      <!-- Top right -->
+      <div class="msg-card gr" id="mc2">
+        <div class="msg-card-header"><div class="msg-card-icon">🛡</div><div class="msg-card-name">Unité Terre</div><div class="msg-card-time">14h21:07Z</div></div>
+        <div class="msg-card-raw">SOURCE: SGTIA_MARKALA<br>DEMANDE: ENGAGEMENT_APPUI_FEU<br>COORD: 14.1567°N 5.7923°W<br>DÉLAI: URGENT</div>
+        <div class="msg-card-problem">Faux ami critique. "ENGAGEMENT" : ordre de tir ou terme administratif ?</div>
+      </div>
+      <!-- Bottom left -->
+      <div class="msg-card pu" id="mc3">
+        <div class="msg-card-header"><div class="msg-card-icon">👥</div><div class="msg-card-name">Forces alliées</div><div class="msg-card-time">14h21:11Z</div></div>
+        <div class="msg-card-raw">SOURCE: ALLIED_TCHAD_3<br>SIGNAL: TECHNICAL en approche<br>STATUS: FATIGUE_COMBAT<br>DÉLAI: CRITIQUE</div>
+        <div class="msg-card-problem">Terme inconnu. "TECHNICAL" absent du référentiel initial.</div>
+      </div>
+      <!-- Bottom right -->
+      <div class="msg-card or" id="mc4">
+        <div class="msg-card-header"><div class="msg-card-icon">📡</div><div class="msg-card-name">SIGINT</div><div class="msg-card-time">14h21:15Z</div></div>
+        <div class="msg-card-raw">SOURCE: SIGINT_INTERCEPT_44<br>FREQ: 118.750 MHz<br>CONTENU: "BRAVO SECURE"<br>CONFIDENCE: 0.35</div>
+        <div class="msg-card-problem">Contradiction. Lecture opposée au Drone ISR sur le même secteur.</div>
+      </div>
+    </div>
+    <div class="footer-bar" style="margin-top:10px">Les messages sont là. Ce qui manque, c'est une lecture commune.</div>
+  </div>
+</div>
+
+<!-- ===== PAGE 3 ===== -->
+<div class="screen" id="s3">
+  <div class="screen-body">
+    <div class="kicker">Ce qui manque</div>
+    <div class="main-title">Un pont de sens entre les sources</div>
+    <div class="sub-title">Les données arrivent, mais leur interprétation doit encore être rapprochée, expliquée et contrôlée.</div>
+    <div class="p3-grid">
+      <div class="p3-col">
+        <div class="p3-col-title">Messages reçus — sens dispersé</div>
+        <div class="p3-item"><div class="p3-dot" style="background:var(--cyan)"></div><div class="p3-item-text" style="color:var(--cyan)">HOSTILE_MOVEMENT<br><span style="color:var(--muted);font-size:clamp(8px,0.85vw,10px)">Vocabulaire anglais / aviation</span></div></div>
+        <div class="p3-item"><div class="p3-dot" style="background:var(--green)"></div><div class="p3-item-text" style="color:var(--green)">ENGAGEMENT_APPUI_FEU<br><span style="color:var(--muted);font-size:clamp(8px,0.85vw,10px)">Faux ami — sens ambigu</span></div></div>
+        <div class="p3-item"><div class="p3-dot" style="background:var(--purple)"></div><div class="p3-item-text" style="color:var(--purple)">TECHNICAL<br><span style="color:var(--muted);font-size:clamp(8px,0.85vw,10px)">Hors référentiel — inconnu</span></div></div>
+        <div class="p3-item"><div class="p3-dot" style="background:var(--orange)"></div><div class="p3-item-text" style="color:var(--orange)">BRAVO SECURE<br><span style="color:var(--muted);font-size:clamp(8px,0.85vw,10px)">Contradiction — lecture opposée</span></div></div>
+      </div>
+      <div class="p3-center">
+        <div class="p3-arrow">→</div>
+        <div class="p3-bridge">
+          <div class="p3-bridge-title">PONT DE SENS</div>
+          <div class="p3-bridge-sub">Interpréter · Expliquer · Faire valider</div>
+        </div>
+        <div class="p3-arrow">→</div>
+      </div>
+      <div class="p3-col">
+        <div class="p3-col-title muted">Ce qu'il faut pouvoir faire</div>
+        <div class="p3-need"><div class="p3-need-n">01</div>Comprendre le sens d'un terme dans son contexte opérationnel</div>
+        <div class="p3-need"><div class="p3-need-n">02</div>Justifier pourquoi un rapprochement est proposé, en langage lisible</div>
+        <div class="p3-need"><div class="p3-need-n">03</div>Détecter les contradictions entre sources avant toute décision</div>
+        <div class="p3-need"><div class="p3-need-n">04</div>Soumettre chaque proposition à la validation d'un analyste habilité</div>
+      </div>
+    </div>
+    <div class="footer-bar">Entre les messages reçus et la décision, il faut une médiation sémantique : comprendre le contexte, expliquer les rapprochements et garder l'humain dans la boucle.</div>
+  </div>
+</div>
+
+<!-- ===== PAGE 4 ===== -->
+<div class="screen" id="s4">
+  <div class="screen-body">
+    <div class="kicker">SynOps en action — Phase Orienter de la boucle OODA</div>
+    <div class="main-title" style="margin-bottom:8px">SynOps en action — de quatre messages à une lecture expliquée</div>
+    <div class="p4-pipeline">
+      <div class="p4-ps"><div class="p4-ps-n">01</div><div class="p4-ps-name">Ingestion</div></div>
+      <div class="p4-ps"><div class="p4-ps-n">02</div><div class="p4-ps-name">Normalisation</div></div>
+      <div class="p4-ps"><div class="p4-ps-n">03</div><div class="p4-ps-name">Alignement sémantique</div></div>
+      <div class="p4-ps llm"><div class="p4-ps-n">04 ★</div><div class="p4-ps-name">Raisonnement LLM</div></div>
+      <div class="p4-ps"><div class="p4-ps-n">05</div><div class="p4-ps-name">Validation analyste habilité</div></div>
+      <div class="p4-ps"><div class="p4-ps-n">06</div><div class="p4-ps-name">Sortie pivot inspirée MIM</div></div>
+    </div>
+    <div class="p4-llm-note">LLM global : lecture croisée des sources · LLM local : raisonnement sur cas complexes</div>
+    <div class="p4-layout">
+      <div class="p4-msglist">
+        <div class="p4-msgbtn cy" onclick="showA4(event,'drone')"><div class="p4-msgbtn-name" style="color:var(--cyan)">✈ Drone ISR</div><div class="p4-msgbtn-key">Normalisé + transmis au contexte global</div></div>
+        <div class="p4-msgbtn gr" onclick="showA4(event,'terre')"><div class="p4-msgbtn-name" style="color:var(--green)">🛡 Unité Terre</div><div class="p4-msgbtn-key">ENGAGEMENT_APPUI_FEU · Passe 3 LLM</div></div>
+        <div class="p4-msgbtn pu" onclick="showA4(event,'allies')"><div class="p4-msgbtn-name" style="color:var(--purple)">👥 Forces alliées</div><div class="p4-msgbtn-key">TECHNICAL · Passe 3 LLM</div></div>
+        <div class="p4-msgbtn or" onclick="showA4(event,'sigint')"><div class="p4-msgbtn-name" style="color:var(--orange)">📡 SIGINT</div><div class="p4-msgbtn-key">BRAVO SECURE · Passe 3 LLM</div></div>
+      </div>
+      <div class="p4-analysis" id="p4box">
+        <div class="p4-placeholder">SynOps en action — de quatre messages à une lecture expliquée</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE 5 ===== -->
+<div class="screen" id="s5">
+  <div class="screen-body">
+    <div class="kicker">Validation humaine et mémoire</div>
+    <div class="main-title">Grist — validation et mémoire institutionnelle de SynOps</div>
+    <div class="sub-title">Les propositions de l'IA ne sont pas appliquées automatiquement : elles sont contrôlées, tracées et capitalisées.</div>
+    <div class="p5-layout">
+      <div class="p5-left">
+        <div class="p5-table-wrap">
+          <div class="p5-table-head">Référentiel SynOps — interface Grist</div>
+          <table>
+            <thead><tr><th>Terme source</th><th>Terme cible</th><th>Sens</th><th>Justification</th><th>Score</th><th>Statut</th><th>Analyste</th><th>Date</th></tr></thead>
+            <tbody>
+              <tr style="border-left:3px solid var(--green)">
+                <td class="td-mono" style="color:var(--green)">ENGAGEMENT_APPUI_FEU</td>
+                <td class="td-mono">DEMANDE_TIR_APPUI</td>
+                <td style="color:var(--cyan);font-weight:700">↔</td>
+                <td style="color:var(--muted)">Contexte tir d'appui urgent</td>
+                <td class="td-score" style="color:var(--green)">0.91</td>
+                <td><span class="stat-pill stat-v">✓ Validé</span></td>
+                <td class="td-mono">Analyste 01</td>
+                <td class="td-mono">14/01/2026</td>
+              </tr>
+              <tr style="border-left:3px solid var(--purple)">
+                <td class="td-mono" style="color:var(--purple)">TECHNICAL</td>
+                <td class="td-mono">VÉHICULE_LÉGER_ARMÉ</td>
+                <td style="color:var(--cyan);font-weight:700">↔</td>
+                <td style="color:var(--muted)">Inférence contextuelle sahélienne</td>
+                <td class="td-score" style="color:var(--purple)">0.74</td>
+                <td><span class="stat-pill stat-v">✓ Validé</span></td>
+                <td class="td-mono">Analyste 02</td>
+                <td class="td-mono">14/01/2026</td>
+              </tr>
+              <tr style="border-left:3px solid var(--orange)">
+                <td class="td-mono" style="color:var(--orange)">BRAVO_SECURE</td>
+                <td class="td-mono">ALERTE_CONTRADICTION</td>
+                <td style="color:var(--orange);font-weight:700">→</td>
+                <td style="color:var(--muted)">Sources incompatibles</td>
+                <td class="td-score" style="color:var(--orange)">0.35</td>
+                <td><span class="stat-pill stat-p">⚠ En attente</span></td>
+                <td class="td-mono" style="color:var(--orange)">Requis</td>
+                <td class="td-mono">14/01/2026</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="p5-guarantees">
+          <div class="p5-g"><div class="p5-g-icon">📋</div><div class="p5-g-title">Traçabilité</div><div class="p5-g-text">Qui a validé quoi, quand, pourquoi.</div></div>
+          <div class="p5-g"><div class="p5-g-icon">📈</div><div class="p5-g-title">Capitalisation</div><div class="p5-g-text">Les cas validés enrichissent le référentiel.</div></div>
+          <div class="p5-g"><div class="p5-g-icon">↔</div><div class="p5-g-title">Bidirectionnel</div><div class="p5-g-text">Un mapping validé réutilisable A↔B.</div></div>
+          <div class="p5-g"><div class="p5-g-icon">🔒</div><div class="p5-g-title">Souveraineté</div><div class="p5-g-text">Open source, hébergeable on-premise.</div></div>
+        </div>
+      </div>
+      <div class="p5-right">
+        <div class="p5-actions-box">
+          <div class="p5-actions-title">Analyste opérationnel habilité</div>
+          <div class="p5-action" data-note="Validation enregistrée : le mapping rejoint le référentiel SynOps avec traçabilité complète."><div class="p5-action-icon" style="background:rgba(57,224,122,.15);color:var(--green)">✓</div><div class="p5-action-text"><div class="p5-action-name" style="color:var(--green)">Valider</div><div class="p5-action-desc">Intégrer au référentiel</div></div></div>
+          <div class="p5-action" data-note="Correction demandée : l'analyste ajuste le terme cible avant capitalisation."><div class="p5-action-icon" style="background:rgba(0,212,255,.15);color:var(--cyan)">✏</div><div class="p5-action-text"><div class="p5-action-name" style="color:var(--cyan)">Corriger</div><div class="p5-action-desc">Ajuster le mapping</div></div></div>
+          <div class="p5-action" data-note="Contexte demandé : SynOps conserve la proposition mais suspend la validation."><div class="p5-action-icon" style="background:rgba(176,109,255,.15);color:var(--purple)">🔍</div><div class="p5-action-text"><div class="p5-action-name" style="color:var(--purple)">Approfondir</div><div class="p5-action-desc">Demander du contexte</div></div></div>
+          <div class="p5-action" data-note="Signalement créé : le cas devient sensible et remonte dans la chaîne de validation."><div class="p5-action-icon" style="background:rgba(255,179,71,.15);color:var(--amber)">🚩</div><div class="p5-action-text"><div class="p5-action-name" style="color:var(--amber)">Signaler</div><div class="p5-action-desc">Escalader un cas sensible</div></div></div>
+          <div class="p5-action" data-note="Proposition rejetée : elle reste historisée mais ne nourrit pas le référentiel actif."><div class="p5-action-icon" style="background:rgba(255,77,77,.15);color:var(--red)">✕</div><div class="p5-action-text"><div class="p5-action-name" style="color:var(--red)">Rejeter</div><div class="p5-action-desc">Refuser une proposition</div></div></div>
+        </div>
+        <div class="p5-human-note">Chaque proposition peut être validée, corrigée ou rejetée par un analyste opérationnel habilité.</div>
+      </div>
+    </div>
+    <div class="footer-bar">Chaque validation transforme une décision ponctuelle en connaissance réutilisable.</div>
+  </div>
+</div>
+
+<!-- ===== PAGE 6 ===== -->
+<div class="screen" id="s6">
+  <div class="screen-body">
+    <div class="kicker">Résultat opérationnel</div>
+    <div class="main-title">Secteur B — ce que voit le poste de commandement</div>
+    <div class="sub-title">Une sortie pivot commune, inspirée MIM, pour orienter la décision.</div>
+    <div class="p6-layout">
+      <div class="p6-sources">
+        <div style="font-family:var(--mono);font-size:clamp(8px,0.85vw,10px);color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Sources traitées</div>
+        <div class="p6-src cy" data-target="presence"><div class="p6-src-name" style="color:var(--cyan)">Drone ISR</div><div class="p6-src-term">PRÉSENCE_HOSTILE</div></div>
+        <div class="p6-src gr" data-target="appui"><div class="p6-src-name" style="color:var(--green)">Unité Terre</div><div class="p6-src-term">DEMANDE_TIR_APPUI</div></div>
+        <div class="p6-src pu" data-target="vehicule"><div class="p6-src-name" style="color:var(--purple)">Forces alliées</div><div class="p6-src-term">VÉHICULE_LÉGER_ARMÉ</div></div>
+        <div class="p6-src or" data-target="contradiction"><div class="p6-src-name" style="color:var(--orange)">SIGINT</div><div class="p6-src-term">ALERTE_CONTRADICTION</div></div>
+      </div>
+      <div class="p6-synth">
+        <div class="p6-synth-head">
+          <div class="p6-synth-title">Synthèse opérationnelle — Secteur B</div>
+          <div class="p6-synth-meta">Sortie pivot commune · 14/01/2026 · 14:33Z · Inspirée MIM · Réf. STANAG</div>
+        </div>
+        <div class="p6-synth-body">
+          <div class="p6-item" data-key="presence" style="border-color:var(--cyan)">
+            <div class="p6-item-icon" style="color:var(--cyan)">⊕</div>
+            <div><div class="p6-item-term">PRÉSENCE_HOSTILE</div><div class="p6-item-detail">3 véhicules + 12 personnels · Direction nord-ouest · Confiance 0.78</div></div>
+          </div>
+          <div class="p6-item" data-key="appui" style="border-color:var(--green)">
+            <div class="p6-item-icon" style="color:var(--green)">✓</div>
+            <div><div class="p6-item-term">DEMANDE_TIR_APPUI — validée</div><div class="p6-item-detail">Confiance 0.91 · Analyste 01 · Mapping A↔B actif</div><div class="p6-item-stat" style="color:var(--green)">Validé dans Grist</div></div>
+          </div>
+          <div class="p6-item" data-key="vehicule" style="border-color:var(--purple)">
+            <div class="p6-item-icon" style="color:var(--purple)">✓</div>
+            <div><div class="p6-item-term">VÉHICULE_LÉGER_ARMÉ — validé</div><div class="p6-item-detail">Confiance 0.74 · Analyste 02 · Mapping allié capitalisé</div><div class="p6-item-stat" style="color:var(--purple)">Capitalisé dans Grist</div></div>
+          </div>
+          <div class="p6-item" data-key="contradiction" style="border-color:var(--orange)">
+            <div class="p6-item-icon" style="color:var(--orange)">⚠</div>
+            <div><div class="p6-item-term">ALERTE_CONTRADICTION SIGINT</div><div class="p6-item-detail">Confiance 0.35 · Incompatible avec Drone ISR</div><div class="p6-item-stat" style="color:var(--orange)">Validation obligatoire — Aucune action engagée avant résolution</div></div>
+          </div>
+        </div>
+        <div class="p6-synth-foot">Sortie pivot commune — exportable et réutilisable selon les besoins des consommateurs</div>
+      </div>
+      <div class="p6-gains">
+        <div style="font-family:var(--mono);font-size:clamp(8px,0.85vw,10px);color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Ce que le PC gagne</div>
+        <div class="p6-gain"><div class="p6-gain-icon">🎯</div><div class="p6-gain-title">Lecture commune</div><div class="p6-gain-text">Image de situation unifiée et exploitable</div></div>
+        <div class="p6-gain"><div class="p6-gain-icon">🧠</div><div class="p6-gain-title">Charge réduite</div><div class="p6-gain-text">L'analyste valide le sens, pas les formats</div></div>
+        <div class="p6-gain"><div class="p6-gain-icon">⚠</div><div class="p6-gain-title">Contradictions visibles</div><div class="p6-gain-text">SIGINT signalé avant tout engagement</div></div>
+        <div class="p6-gain"><div class="p6-gain-icon">👤</div><div class="p6-gain-title">Décision humaine</div><div class="p6-gain-text">La décision reste humaine, toujours</div></div>
+      </div>
+    </div>
+    <div class="footer-bar">La donnée reste traçable. Le sens devient partageable. La décision reste humaine.</div>
+  </div>
+</div>
+
+<!-- ===== PAGE 7 ===== -->
+<div class="screen" id="s7">
+  <div class="screen-body">
+    <div class="kicker">SynOps · Deux au Carré · Women in Gen AI 2026</div>
+    <div class="p7-layout">
+      <div class="p7-left">
+        <div class="p7-headline">Donner du <em>sens</em> aux données,<br>pour mieux orienter la <em>décision</em>.</div>
+        <div class="p7-quote">Avec SynOps, nous répondons au moment où l'information est reçue, mais où son sens doit encore être clarifié. L'IA générative intervient sur les ambiguïtés, les termes inconnus et les contradictions ; l'analyste opérationnel habilité confirme ou corrige.</div>
+        <div class="p7-timeline">
+          <div class="p7-tl-step"><div class="p7-tl-year y13">2013</div><div class="p7-tl-text">Messages hétérogènes, sens à reconstruire, contradictions à interpréter.</div></div>
+          <div class="p7-tl-step"><div class="p7-tl-year y26">2026</div><div class="p7-tl-text">Raisonnement génératif, validation Grist, sortie pivot commune.</div></div>
+          <div class="p7-tl-step"><div class="p7-tl-year y27">2027</div><div class="p7-tl-text">Référentiel enrichi, mappings réutilisables, charge cognitive réduite.</div></div>
+        </div>
+        <div class="p7-pillars">
+          <div class="p7-pillar"><div class="p7-pillar-icon">🧠</div><div class="p7-pillar-title">Raisonner</div><div class="p7-pillar-text">Comprendre le contexte opérationnel complet.</div></div>
+          <div class="p7-pillar"><div class="p7-pillar-icon">💬</div><div class="p7-pillar-title">Expliquer</div><div class="p7-pillar-text">Justifier chaque rapprochement en langage lisible.</div></div>
+          <div class="p7-pillar"><div class="p7-pillar-icon">🔄</div><div class="p7-pillar-title">Capitaliser</div><div class="p7-pillar-text">Enrichir le référentiel à chaque validation.</div></div>
+          <div class="p7-pillar"><div class="p7-pillar-icon">🔒</div><div class="p7-pillar-title">Maîtriser</div><div class="p7-pillar-text">LLM ciblé, contrôle humain et déploiement souverain.</div></div>
+        </div>
+        <div class="p7-final"><strong>SynOps ne remplace pas l'humain :</strong> il transforme des messages hétérogènes en compréhension commune, exploitable et maîtrisée.</div>
+      </div>
+      <div class="p7-right">
+        <div class="p7-team-box">
+          <img src="https://raw.githubusercontent.com/hantaranui/images-hackaton/main/equipe.png" alt="Équipe Deux au Carré" class="p7-team-img">
+          <div class="p7-team-body">
+            <div class="p7-team-lbl">L'équipe</div>
+            <div class="p7-team-name">Deux au Carré</div>
+            <div class="p7-team-desc">4 femmes formées au numérique par Au Carré, une ESN inclusive. En CDD d'insertion, on apprend en faisant. Ce hackathon, c'est exactement ça.</div>
+            <div class="p7-tags"><div class="p7-tag">AU CARRÉ</div><div class="p7-tag">NUMÉRIQUE</div><div class="p7-tag">CDD INSERTION</div><div class="p7-tag">WOMEN IN GEN AI</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-label" id="foot-lbl">Introduction — 1 / 7</div>
+  <div class="foot-btns">
+    <button class="btn btn-g" id="btn-prev" onclick="nav(-1)">← Précédent</button>
+    <button class="btn btn-p" id="btn-next" onclick="nav(1)">Suivant →</button>
+  </div>
+</footer>
+
+<script>
+const SC=['s1','s2','s3','s4','s5','s6','s7'];
+const LB=['Accroche Serval','Les 4 messages','Le pont de sens','SynOps en action','Grist — mémoire','PC de commandement','Conclusion'];
+let cur=0;
+
+// Nav dots
+const nd=document.getElementById('nav-dots');
+SC.forEach((_,i)=>{const d=document.createElement('div');d.className='dot'+(i===0?' a':'');d.title=LB[i];d.onclick=()=>go(i);nd.appendChild(d);});
+
+function go(i){
+  document.getElementById(SC[cur]).classList.remove('active');
+  cur=Math.max(0,Math.min(SC.length-1,i));
+  document.getElementById(SC[cur]).classList.add('active');
+  upd();
+  if(cur===1)animMsgs();
+  if(cur===3)resetA4();
+  if(cur===5)animSynth();
+}
+function nav(d){go(cur+d);}
+function upd(){
+  nd.querySelectorAll('.dot').forEach((d,i)=>{d.className='dot'+(i===cur?' a':i<cur?' d':'');});
+  document.getElementById('btn-prev').style.display=cur===0?'none':'';
+  const bn=document.getElementById('btn-next');
+  bn.textContent=cur===SC.length-1?'↺ Recommencer':'Suivant →';
+  bn.onclick=cur===SC.length-1?()=>go(0):()=>nav(1);
+  document.getElementById('foot-lbl').textContent=LB[cur]+' — '+(cur+1)+' / '+SC.length;
+}
+function animMsgs(){
+  ['mc1','mc2','mc3','mc4'].forEach((id,i)=>{
+    const el=document.getElementById(id);
+    el.classList.remove('show');
+    setTimeout(()=>el.classList.add('show'),200+i*350);
+  });
+}
+upd();
+
+function resetA4(){
+  document.querySelectorAll('#s4 .p4-msgbtn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('p4box').innerHTML='<div class="p4-placeholder">SynOps en action — de quatre messages à une lecture expliquée</div>';
+}
+
+function animSynth(){
+  const screen=document.getElementById('s6');
+  screen.classList.remove('active');
+  void screen.offsetWidth;
+  screen.classList.add('active');
+}
+
+document.querySelectorAll('.p5-action').forEach(action=>{
+  action.addEventListener('click',()=>{
+    document.querySelectorAll('.p5-action').forEach(a=>a.classList.remove('active'));
+    action.classList.add('active');
+    const note=document.querySelector('.p5-human-note');
+    if(note) note.textContent=action.dataset.note;
+  });
+});
+
+document.querySelectorAll('.p6-src').forEach(source=>{
+  const setLink=(on)=>{
+    const key=source.dataset.target;
+    const layout=source.closest('.p6-layout');
+    const item=document.querySelector(`.p6-item[data-key="${key}"]`);
+    if(layout) layout.classList.toggle('is-linked',on);
+    source.classList.toggle('hovering',on);
+    if(item) item.classList.toggle('hovering',on);
+  };
+  source.addEventListener('mouseenter',()=>setLink(true));
+  source.addEventListener('mouseleave',()=>setLink(false));
+  source.addEventListener('click',()=>{
+    const key=source.dataset.target;
+    document.querySelectorAll('.p6-src,.p6-item').forEach(el=>el.classList.remove('active'));
+    source.classList.add('active');
+    const item=document.querySelector(`.p6-item[data-key="${key}"]`);
+    if(item) item.classList.add('active');
+  });
+});
+
+// PAGE 4 analyses
+const A4={
+  drone:{c:'var(--cyan)',t:'Drone ISR',p:'Cas connu — normalisé avant raisonnement local',
+    c1:`<div class="p4-col-lbl">Normalisation effectuée</div>
+    <div style="font-family:var(--mono);font-size:clamp(9px,1vw,12px);line-height:2.1">
+      <span style="color:var(--muted)">KPH 35</span> → <span style="color:var(--cyan)">35 km/h</span><br>
+      <span style="color:var(--muted)">HEADING NW</span> → <span style="color:var(--cyan)">Nord-Ouest</span><br>
+      <span style="color:var(--muted)">WGS84</span> → <span style="color:var(--cyan)">Format pivot</span><br>
+      <span style="color:var(--muted)">HOSTILE_MOVEMENT</span> → <span style="color:var(--cyan)">PRÉSENCE_HOSTILE</span>
+    </div>
+    <div style="font-size:clamp(9px,1vw,11px);color:var(--muted);margin-top:10px;font-style:italic;">Contexte transmis au LLM pour lecture croisée.</div>`,
+    c2:`<div class="p4-col-lbl">Analyse LLM — lecture croisée globale</div>
+    <div class="p4-llmbox">"Le message Drone ISR confirme une présence hostile active dans le Secteur B. Il est cohérent avec la demande d'appui feu de l'unité Terre et servira de point de comparaison pour la lecture croisée des autres sources."</div>`,
+    c3:`<div class="p4-col-lbl">Résultat</div>
+    <div class="p4-score" style="color:var(--cyan)">0.78</div>
+    <div class="p4-score-lbl">SCORE CONFIANCE</div>
+    <div class="p4-sbar"><div class="p4-sfill" style="width:78%;background:var(--cyan)"></div></div>
+    <div class="p4-pill pill-p">✓ Normalisé et transmis</div>`
+  },
+  terre:{c:'var(--green)',t:'Unité Terre — ENGAGEMENT_APPUI_FEU',p:'Passe 3 — Faux ami résolu par contexte',
+    c1:`<div class="p4-col-lbl">Proposition d'alignement</div>
+    <div class="p4-mapping"><div class="p4-term">ENGAGEMENT_APPUI_FEU</div><div class="p4-arr">↔</div><div class="p4-term" style="color:var(--green)">DEMANDE_TIR_APPUI</div></div>
+    <div class="p4-bidir">Mapping bidirectionnel si validé par l'analyste opérationnel habilité.</div>`,
+    c2:`<div class="p4-col-lbl">Explication Mistral AI</div>
+    <div class="p4-llmbox">"Le terme ENGAGEMENT est associé à APPUI_FEU, une urgence et une zone active. Le contexte — coordonnées de combat, délai URGENT — indique une demande de tir d'appui, non un sens administratif ou contractuel."</div>`,
+    c3:`<div class="p4-col-lbl">Résultat</div>
+    <div class="p4-score" style="color:var(--green)">0.91</div>
+    <div class="p4-score-lbl">SCORE CONFIANCE</div>
+    <div class="p4-sbar"><div class="p4-sfill" style="width:91%;background:var(--green)"></div></div>
+    <div class="p4-pill pill-v">✓ Validé dans Grist</div>
+    <div class="p4-bidir">Mapping bidirectionnel activé — réutilisable A↔B.</div>`
+  },
+  allies:{c:'var(--purple)',t:'Forces alliées — TECHNICAL',p:'Passe 3 — Terme inconnu inféré',
+    c1:`<div class="p4-col-lbl">Proposition d'alignement</div>
+    <div class="p4-mapping"><div class="p4-term">TECHNICAL</div><div class="p4-arr">↔</div><div class="p4-term" style="color:var(--purple)">VÉHICULE_LÉGER_ARMÉ</div></div>
+    <div style="font-size:clamp(9px,1vw,11px);color:var(--muted);margin-top:6px;">Absent du référentiel initial. Inférence contextuelle sahélienne.</div>`,
+    c2:`<div class="p4-col-lbl">Explication Mistral AI</div>
+    <div class="p4-llmbox">"TECHNICAL désigne dans le contexte sahélien un véhicule léger à plateau armé, absent du référentiel français initial. Le contexte — forces alliées tchadiennes, zone de combat — permet l'inférence. Score modéré, validation requise."</div>`,
+    c3:`<div class="p4-col-lbl">Résultat</div>
+    <div class="p4-score" style="color:var(--purple)">0.74</div>
+    <div class="p4-score-lbl">SCORE CONFIANCE</div>
+    <div class="p4-sbar"><div class="p4-sfill" style="width:74%;background:var(--purple)"></div></div>
+    <div class="p4-pill pill-c">⊕ Capitalisé dans Grist</div>
+    <div class="p4-bidir">Mapping allié capitalisé — réutilisable après validation.</div>`
+  },
+  sigint:{c:'var(--orange)',t:'SIGINT — BRAVO SECURE',p:'Passe 3 — Contradiction détectée',
+    c1:`<div class="p4-col-lbl">Proposition du LLM</div>
+    <div class="p4-alert-tag">⚠ ALERTE_CONTRADICTION</div>
+    <div style="font-size:clamp(9px,1vw,12px);color:var(--muted);line-height:1.7">
+      Deux lectures incompatibles :<br>
+      <span style="color:var(--cyan)">Drone ISR</span> → présence hostile active<br>
+      <span style="color:var(--orange)">SIGINT</span> → "BRAVO SECURE"
+    </div>`,
+    c2:`<div class="p4-col-lbl">Explication Mistral AI</div>
+    <div class="p4-llmbox">"BRAVO SECURE peut indiquer zone sécurisée ou point de regroupement ennemi. Le Drone ISR signale une présence hostile active dans le même secteur. Les deux lectures sont incompatibles. Score abaissé à 0.35."</div>`,
+    c3:`<div class="p4-col-lbl">Résultat</div>
+    <div class="p4-score" style="color:var(--orange)">0.35</div>
+    <div class="p4-score-lbl">SCORE CONFIANCE</div>
+    <div class="p4-sbar"><div class="p4-sfill" style="width:35%;background:var(--orange)"></div></div>
+    <div class="p4-pill pill-a">⚠ Validation obligatoire</div>
+    <div class="p4-warn">Aucune action engagée avant résolution par l'analyste opérationnel habilité.</div>`
+  }
+};
+
+function showA4(e,k){
+  const a=A4[k];
+  document.querySelectorAll('.p4-msgbtn').forEach(b=>b.classList.remove('active'));
+  e.currentTarget.classList.add('active');
+  document.getElementById('p4box').innerHTML=`
+    <div class="p4-ana-head">
+      <div class="p4-ana-title" style="color:${a.c}">${a.t}</div>
+      <div class="p4-ana-passe">${a.p}</div>
+    </div>
+    <div class="p4-ana-cols">
+      <div class="p4-ana-col">${a.c1}</div>
+      <div class="p4-ana-col">${a.c2}</div>
+      <div class="p4-ana-col">${a.c3}</div>
+    </div>`;
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();nav(1);}
+  if(e.key==='ArrowLeft'){e.preventDefault();nav(-1);}
+});
+</script>
+</body>
+</html>
